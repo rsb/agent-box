@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/.claude/settings.json)",
+      "Edit(~/code/software/rsb/agent-box/**)"
+    ]
+  }
+}
