@@ -1,0 +1,12 @@
+# Bundles carry repo history in and out of the box; regenerated each run
+bundles/
+
+# Local environment overrides, if you ever put one here instead of ~/.config
+*.env
+.env.*
+
+# Editor and OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store

@@ -1,0 +1,61 @@
+name: gm-sls-agent
+
+services:
+  proxy:
+    build: ./proxy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 256m
+    networks: [egress, box]
+
+  agent:
+    build: .
+    depends_on: [proxy]
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:exec,size=2g
+      - /home/node:uid=1000,gid=1000,mode=0755
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 2048
+    mem_limit: 8g
+    networks: [box]
+    environment:
+      BRANCH: ${BRANCH:-}
+      GIT_AUTHOR_NAME: ${AGENT_NAME:-}
+      GIT_AUTHOR_EMAIL: ${AGENT_EMAIL:-}
+      GIT_COMMITTER_NAME: ${AGENT_NAME:-}
+      GIT_COMMITTER_EMAIL: ${AGENT_EMAIL:-}
+      HTTP_PROXY: http://proxy:3128
+      HTTPS_PROXY: http://proxy:3128
+      http_proxy: http://proxy:3128
+      https_proxy: http://proxy:3128
+      NO_PROXY: localhost,127.0.0.1
+      no_proxy: localhost,127.0.0.1
+      CLAUDE_CONFIG_DIR: /home/node/.claude
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+      DISABLE_AUTOUPDATER: "1"
+    volumes:
+      - workspace:/workspace
+      - claude-config:/home/node/.claude
+      - pnpm-store:/home/node/.local/share/pnpm
+      - ./bundles:/bundles:ro
+      - ./managed-settings.json:/etc/claude-code/managed-settings.json:ro
+    stdin_open: true
+    tty: true
+
+networks:
+  box:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.77.0.0/24
+  egress: {}
+
+volumes:
+  workspace: {}
+  claude-config: {}
+  pnpm-store: {}
