@@ -7,6 +7,19 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Refuse to run from a box whose files differ from the committed main.
+# A session in another repo cannot edit here, but a changed file is the
+# one thing that would silently widen what the agent can reach.
+if [ "$(git symbolic-ref --short -q HEAD)" != main ]; then
+  echo "start.sh: agent-box is not on main" >&2
+  exit 1
+fi
+if [ -n "$(git status --porcelain)" ]; then
+  echo "start.sh: agent-box has uncommitted changes; commit or discard them first" >&2
+  git status --short >&2
+  exit 1
+fi
+
 # shellcheck source=/dev/null
 . "${GM_SLS_AGENT_ENV:-$HOME/.config/gm-sls-agent/app.env}"
 : "${AGENT_NAME:?set in app.env}" "${AGENT_EMAIL:?set in app.env}" "${OWNER_CLONE:?set in app.env}"
