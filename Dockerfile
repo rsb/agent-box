@@ -2,6 +2,7 @@ FROM node:24.21.0-slim
 
 ARG PNPM_VERSION=12.5.1
 ARG CLAUDE_CODE_VERSION=2.1.296
+ARG CODEX_VERSION=0.164.0
 ARG SQLD_VERSION=0.24.32
 ARG SQLD_SHA256=71720fc8648c19efef416efebd47145ef59b62e198770533530a858e1336879f
 ARG PLAYWRIGHT_VERSION=1.63.0
@@ -18,7 +19,8 @@ RUN curl -fsSL -o /tmp/sqld.tar.xz \
   libsql-server-x86_64-unknown-linux-gnu/sqld \
   && rm /tmp/sqld.tar.xz
 
-RUN npm install -g "pnpm@${PNPM_VERSION}" "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+RUN npm install -g "pnpm@${PNPM_VERSION}" "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+  "@openai/codex@${CODEX_VERSION}"
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx -y "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium \
