@@ -7,17 +7,21 @@ the box, runs the agent, and does all GitHub actions on the host.
 
 ## Layout
 
-- `Dockerfile`: the image. Node 24, pnpm, Claude Code pinned, sqld,
-  Playwright Chromium. Shaped for gm-serverless; lumen needs its own.
-- `compose.yaml`: two services on an internal network. `proxy` is the only
-  one with egress; `agent` is user 1000, read-only root, tmpfs, no
-  capabilities, with the repo on a named volume.
+- `Dockerfile`: the image. Node 24, pnpm, Claude Code and Codex pinned,
+  sqld, Playwright Chromium. Shaped for gm-serverless; lumen needs its own.
+- `compose.yaml`: `agent` (Claude Code) and `codex` share one shape:
+  user 1000, read-only root, tmpfs, no capabilities, the repo on a named
+  volume. Each mounts only its own credential volume and sits on its own
+  internal network with its own proxy (`proxy`, `proxy-codex`), the only
+  services with egress.
 - `proxy/`: tinyproxy, `CONNECT` on 443 only, default deny,
-  `allowlist` is the whole policy.
+  `allowlist` (Claude Code) and `allowlist-codex` are the whole policy.
 - `entrypoint.sh`: clones `/bundles/in.bundle` onto the volume on first
   start, drops `origin`, sets `core.hooksPath`.
 - `managed-settings.json`: Claude Code permission mode and denied tools
   inside the box.
+- `codex/`: Codex's managed config and requirements, baked into
+  `/etc/codex`. Codex's own sandbox is off; the container is the sandbox.
 - `start.sh`, `bundle-out.sh`: the manual launcher and the way out, until
   the driver replaces them. Both read `~/.config/gm-sls-agent/app.env` for
   the bot identity and the owner's clone path.
@@ -26,8 +30,9 @@ the box, runs the agent, and does all GitHub actions on the host.
 
 ```sh
 ./start.sh [--fresh] <branch>   # bundle in, start claude on <branch>
+./start.sh --codex <branch>     # the same with codex
 ./bundle-out.sh <branch>        # fetch the box's branch as agent/<branch>
-docker compose logs proxy | grep CONNECT   # what the box reached
+docker compose logs proxy proxy-codex | grep CONNECT   # what the box reached
 ```
 
 Commits inside carry the bot identity through `GIT_AUTHOR_*` and
