@@ -1,0 +1,5 @@
+# Limits Codex enforces over any config layer, including -c and the user's
+# config.toml. Keep in step with managed_config.toml.
+allowed_sandbox_modes = ["danger-full-access"]
+allowed_approval_policies = ["never"]
+allowed_web_search_modes = ["disabled"]

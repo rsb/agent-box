@@ -1,5 +1,34 @@
 name: gm-sls-agent
 
+# What every agent service shares. Each service adds only its own
+# credential volume, so neither agent can read the other's token.
+x-agent: &agent
+  build: .
+  user: "1000:1000"
+  read_only: true
+  tmpfs:
+    - /tmp:exec,size=2g
+    - /home/node:uid=1000,gid=1000,mode=0755
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 2048
+  mem_limit: 8g
+  stdin_open: true
+  tty: true
+
+x-agent-env: &agent-env
+  BRANCH: ${BRANCH:-}
+  GIT_AUTHOR_NAME: ${AGENT_NAME:-}
+  GIT_AUTHOR_EMAIL: ${AGENT_EMAIL:-}
+  GIT_COMMITTER_NAME: ${AGENT_NAME:-}
+  GIT_COMMITTER_EMAIL: ${AGENT_EMAIL:-}
+  HTTP_PROXY: http://proxy:3128
+  HTTPS_PROXY: http://proxy:3128
+  http_proxy: http://proxy:3128
+  https_proxy: http://proxy:3128
+  NO_PROXY: localhost,127.0.0.1
+  no_proxy: localhost,127.0.0.1
+
 services:
   proxy:
     build: ./proxy
@@ -10,31 +39,30 @@ services:
     mem_limit: 256m
     networks: [egress, box]
 
-  agent:
-    build: .
-    depends_on: [proxy]
-    user: "1000:1000"
+  # Codex's proxy: its own allowlist, on a network only codex joins, under
+  # the name proxy so the agent environment is the same for both.
+  proxy-codex:
+    build:
+      context: ./proxy
+      args:
+        ALLOWLIST: allowlist-codex
+        BOX_SUBNET: 10.77.1.0/24
     read_only: true
-    tmpfs:
-      - /tmp:exec,size=2g
-      - /home/node:uid=1000,gid=1000,mode=0755
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
-    pids_limit: 2048
-    mem_limit: 8g
+    pids_limit: 128
+    mem_limit: 256m
+    networks:
+      egress: {}
+      box-codex:
+        aliases: [proxy]
+
+  agent:
+    <<: *agent
+    depends_on: [proxy]
     networks: [box]
     environment:
-      BRANCH: ${BRANCH:-}
-      GIT_AUTHOR_NAME: ${AGENT_NAME:-}
-      GIT_AUTHOR_EMAIL: ${AGENT_EMAIL:-}
-      GIT_COMMITTER_NAME: ${AGENT_NAME:-}
-      GIT_COMMITTER_EMAIL: ${AGENT_EMAIL:-}
-      HTTP_PROXY: http://proxy:3128
-      HTTPS_PROXY: http://proxy:3128
-      http_proxy: http://proxy:3128
-      https_proxy: http://proxy:3128
-      NO_PROXY: localhost,127.0.0.1
-      no_proxy: localhost,127.0.0.1
+      <<: *agent-env
       CLAUDE_CONFIG_DIR: /home/node/.claude
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
       DISABLE_AUTOUPDATER: "1"
@@ -44,8 +72,20 @@ services:
       - pnpm-store:/home/node/.local/share/pnpm
       - ./bundles:/bundles:ro
       - ./managed-settings.json:/etc/claude-code/managed-settings.json:ro
-    stdin_open: true
-    tty: true
+
+  codex:
+    <<: *agent
+    depends_on: [proxy-codex]
+    networks: [box-codex]
+    command: ["codex"]
+    environment:
+      <<: *agent-env
+      CODEX_HOME: /home/node/.codex
+    volumes:
+      - workspace:/workspace
+      - codex-home:/home/node/.codex
+      - pnpm-store:/home/node/.local/share/pnpm
+      - ./bundles:/bundles:ro
 
 networks:
   box:
@@ -53,9 +93,15 @@ networks:
     ipam:
       config:
         - subnet: 10.77.0.0/24
+  box-codex:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.77.1.0/24
   egress: {}
 
 volumes:
   workspace: {}
   claude-config: {}
+  codex-home: {}
   pnpm-store: {}

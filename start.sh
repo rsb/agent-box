@@ -2,8 +2,10 @@
 # Bundle a branch out of the owner's clone and start the box on it.
 # No token: the box reaches nothing but the proxy, and commits carry
 # the bot identity through the git environment variables.
-# Usage: ./start.sh [--fresh] <branch> [command...]   (default command is claude)
+# Usage: ./start.sh [--fresh] [--codex] <branch> [command...]
 #   --fresh removes the workspace volume so the box clones the new bundle.
+#   --codex runs the codex service (default command codex) instead of
+#   agent (default command claude).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -25,11 +27,16 @@ fi
 : "${AGENT_NAME:?set in app.env}" "${AGENT_EMAIL:?set in app.env}" "${OWNER_CLONE:?set in app.env}"
 
 fresh=
-if [ "${1:-}" = --fresh ]; then
-  fresh=1
+service=agent
+while [ $# -gt 0 ]; do
+  case $1 in
+    --fresh) fresh=1 ;;
+    --codex) service=codex ;;
+    *) break ;;
+  esac
   shift
-fi
-branch=${1:?usage: start.sh [--fresh] <branch> [command...]}
+done
+branch=${1:?usage: start.sh [--fresh] [--codex] <branch> [command...]}
 shift
 
 if [ -n "$fresh" ]; then
@@ -40,5 +47,5 @@ mkdir -p bundles
 git -C "$OWNER_CLONE" bundle create "$PWD/bundles/in.bundle" "$branch"
 
 export BRANCH="$branch" AGENT_NAME AGENT_EMAIL
-echo "Starting as $AGENT_NAME on $branch." >&2
-exec docker compose run --rm agent "$@"
+echo "Starting $service as $AGENT_NAME on $branch." >&2
+exec docker compose run --rm "$service" "$@"

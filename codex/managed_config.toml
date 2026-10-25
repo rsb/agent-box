@@ -1,0 +1,21 @@
+# Codex defaults inside the box. Baked into the image at /etc/codex, on the
+# read-only root, so the agent cannot rewrite them; $CODEX_HOME/config.toml
+# is on a writable volume and Codex itself writes trust entries there.
+
+# The container is the sandbox. Codex's bundled bwrap needs user
+# namespaces, which the box does not grant (cap_drop ALL, default seccomp).
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+
+# Hosted search runs on OpenAI's side and would bypass the proxy allowlist.
+web_search = "disabled"
+
+# Sign in with ChatGPT, like the Claude run's subscription login; the token
+# lives in the codex-home volume as a file (there is no keyring in the box).
+forced_login_method = "chatgpt"
+cli_auth_credentials_store = "file"
+
+check_for_update_on_startup = false
+
+[analytics]
+enabled = false
