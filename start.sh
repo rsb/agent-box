@@ -39,6 +39,17 @@ done
 branch=${1:?usage: start.sh [--fresh] [--codex] <branch> [command...]}
 shift
 
+# Name the source repo before anything runs, so a wrong OWNER_CLONE shows.
+if ! head=$(git -C "$OWNER_CLONE" rev-parse --short HEAD); then
+  echo "start.sh: OWNER_CLONE=$OWNER_CLONE is not a git clone" >&2
+  exit 1
+fi
+if ! tip=$(git -C "$OWNER_CLONE" rev-parse --short --verify --quiet "$branch^{commit}"); then
+  echo "start.sh: no branch $branch in $OWNER_CLONE" >&2
+  exit 1
+fi
+echo "Starting $service as $AGENT_NAME on $branch ($tip) from $OWNER_CLONE (HEAD $head)." >&2
+
 if [ -n "$fresh" ]; then
   docker volume rm -f gm-sls-agent_workspace >/dev/null
 fi
@@ -47,5 +58,4 @@ mkdir -p bundles
 git -C "$OWNER_CLONE" bundle create "$PWD/bundles/in.bundle" "$branch"
 
 export BRANCH="$branch" AGENT_NAME AGENT_EMAIL
-echo "Starting $service as $AGENT_NAME on $branch." >&2
 exec docker compose run --rm "$service" "$@"

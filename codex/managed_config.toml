@@ -19,3 +19,13 @@ check_for_update_on_startup = false
 
 [analytics]
 enabled = false
+
+# D6: no agent memory in the box. Off by default in 0.164.0; pinned so a
+# later default cannot turn it on. Codex still opens an empty
+# memories_1.sqlite in CODEX_HOME at every start, whatever these say.
+[features]
+memories = false
+
+[memories]
+generate_memories = false
+use_memories = false
