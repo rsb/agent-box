@@ -1,4 +1,6 @@
 {
+  "autoMemoryEnabled": false,
+  "autoDreamEnabled": false,
   "permissions": {
     "defaultMode": "auto",
     "deny": [
