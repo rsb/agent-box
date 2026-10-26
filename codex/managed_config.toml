@@ -25,6 +25,10 @@ enabled = false
 # memories_1.sqlite in CODEX_HOME at every start, whatever these say.
 [features]
 memories = false
+# D7 (#5 follow-up): no background server. Codex 0.157.0+ starts one for
+# interactive runs and runs it from a copy staged in CODEX_HOME; the noexec
+# tmpfs home cannot exec it, and a self-updating copy has no place in a
+# pinned box. Keep in step with managed_config.toml / requirements.toml.
 daemon_auto_start = false
 # D2: no ChatGPT apps or plugins in the box. Each would reach services
 # (GitHub, Gmail, Drive, ...) through OpenAI's side, past the proxy
