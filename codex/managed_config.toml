@@ -25,6 +25,7 @@ enabled = false
 # memories_1.sqlite in CODEX_HOME at every start, whatever these say.
 [features]
 memories = false
+daemon_auto_start = false
 # D2: no ChatGPT apps or plugins in the box. Each would reach services
 # (GitHub, Gmail, Drive, ...) through OpenAI's side, past the proxy
 # allowlist. On by default in 0.164.0 except recommended_plugins; the
