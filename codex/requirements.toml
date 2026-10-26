@@ -3,3 +3,15 @@
 allowed_sandbox_modes = ["danger-full-access"]
 allowed_approval_policies = ["never"]
 allowed_web_search_modes = ["disabled"]
+
+# D2: features pinned off. Codex forces these over every config layer,
+# including --enable and -c; an unknown key is only a startup warning, so
+# the box checks read them back. Keep in step with [features] in
+# managed_config.toml.
+[features]
+apps = false
+plugins = false
+remote_plugin = false
+plugin_sharing = false
+recommended_plugins = false
+tool_suggest = false
