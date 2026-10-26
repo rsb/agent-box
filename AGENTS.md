@@ -18,7 +18,7 @@ pins in their own commit.
 
 Checks:
 
-- Lint: `shellcheck start.sh bundle-out.sh entrypoint.sh`
+- Lint: `shellcheck start.sh bundle-out.sh entrypoint.sh auth-sync.sh`
 - Build: `docker compose build`
 - Smoke: `./start.sh --fresh <branch> true` exits 0 and the proxy log shows
   only allowlisted hosts.

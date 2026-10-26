@@ -58,4 +58,15 @@ mkdir -p bundles
 git -C "$OWNER_CLONE" bundle create "$PWD/bundles/in.bundle" "$branch"
 
 export BRANCH="$branch" AGENT_NAME AGENT_EMAIL
-exec docker compose run --rm "$service" "$@"
+
+# The home is per run (D8); only the auth file lasts. Write back first what
+# an interrupted run left in auth-out, then run, then write back this run's.
+sync_auth() {
+  docker compose run --rm --no-deps -T "$service-auth-sync" </dev/null \
+    || echo "start.sh: $service-auth-sync failed; the stored sign-in was kept" >&2
+}
+sync_auth
+rc=0
+docker compose run --rm "$service" "$@" || rc=$?
+sync_auth
+exit "$rc"
