@@ -11,13 +11,19 @@ the box, runs the agent, and does all GitHub actions on the host.
   sqld, Playwright Chromium. Shaped for gm-serverless; lumen needs its own.
 - `compose.yaml`: `agent` (Claude Code) and `codex` share one shape:
   user 1000, read-only root, tmpfs, no capabilities, the repo on a named
-  volume. Each mounts only its own credential volume and sits on its own
+  volume. Each mounts only its own auth volumes and sits on its own
   internal network with its own proxy (`proxy`, `proxy-codex`), the only
-  services with egress.
+  services with egress. The agent's home is tmpfs, new each run; only
+  its auth file lasts (`agent-auth-sync`, `codex-auth-sync`).
 - `proxy/`: tinyproxy, `CONNECT` on 443 only, default deny,
   `allowlist` (Claude Code) and `allowlist-codex` are the whole policy.
 - `entrypoint.sh`: clones `/bundles/in.bundle` onto the volume on first
-  start, drops `origin`, sets `core.hooksPath`.
+  start, drops `origin`, sets `core.hooksPath`. Copies the auth file from
+  `/auth` (read-only) into the empty home, runs the agent, and copies the
+  auth file to `/auth-out` if the run changed it.
+- `auth-sync.sh`: run by `start.sh` after the agent exits, with no network.
+  Writes `/auth-out`'s auth file back to the auth volume only if it is a
+  JSON object in a regular file, then empties `/auth-out`.
 - `managed-settings.json`: Claude Code permission mode and denied tools
   inside the box.
 - `codex/`: Codex's managed config and requirements, baked into
