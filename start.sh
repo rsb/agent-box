@@ -6,6 +6,8 @@
 #   --fresh removes the workspace volume so the box clones the new bundle.
 #   --codex runs the codex service (default command codex) instead of
 #   agent (default command claude).
+# Environment: AGENT_NAME, AGENT_EMAIL (the bot identity for commits) and
+# OWNER_CLONE (the clone the branch is bundled from).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -22,9 +24,11 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-# shellcheck source=/dev/null
-. "${GM_SLS_AGENT_ENV:-$HOME/.config/gm-sls-agent/app.env}"
-: "${AGENT_NAME:?set in app.env}" "${AGENT_EMAIL:?set in app.env}" "${OWNER_CLONE:?set in app.env}"
+# The bot identity and the owner's clone come from the environment.
+: "${AGENT_NAME:?set the bot identity in the environment}" "${AGENT_EMAIL:?set the bot identity in the environment}"
+: "${OWNER_CLONE:?set OWNER_CLONE to the clone to bundle from}"
+# The desk's project; drive.sh runs each attempt as its own.
+export COMPOSE_PROJECT_NAME=agent-box
 
 fresh=
 service=agent
@@ -51,7 +55,7 @@ fi
 echo "Starting $service as $AGENT_NAME on $branch ($tip) from $OWNER_CLONE (HEAD $head)." >&2
 
 if [ -n "$fresh" ]; then
-  docker volume rm -f gm-sls-agent_workspace >/dev/null
+  docker volume rm -f agent-box_workspace >/dev/null
 fi
 
 mkdir -p bundles
@@ -65,6 +69,7 @@ sync_auth() {
   docker compose run --rm --no-deps -T "$service-auth-sync" </dev/null \
     || echo "start.sh: $service-auth-sync failed; the stored sign-in was kept" >&2
 }
+docker compose build "$service" "$service-auth-sync" >&2
 sync_auth
 rc=0
 docker compose run --rm "$service" "$@" || rc=$?

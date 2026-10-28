@@ -5,9 +5,10 @@ if [ ! -d /workspace/.git ]; then
   git clone --branch "$BRANCH" /bundles/in.bundle /workspace
   git -C /workspace remote remove origin
   git -C /workspace config core.hooksPath .githooks
-else
+elif [ -e /bundles/in.bundle ]; then
   # Keep the existing workspace, but say so: the bundle just made is not
   # what the agent will see. Warnings only; a failed lookup changes nothing.
+  # A driver launch mounts its clone at /workspace and no bundle.
   ws=$(git -C /workspace rev-parse HEAD 2>/dev/null) || ws=
   bundle=
   if [ -n "${BRANCH:-}" ] \
@@ -36,6 +37,16 @@ chmod 700 "$home"
 if [ -f "/auth/$name" ] && [ ! -L "/auth/$name" ]; then
   cp "/auth/$name" "$AGENT_AUTH"
   chmod 600 "$AGENT_AUTH"
+fi
+# A driver launch mounts the skills it allows read-only under /skills (not
+# in the home, where the mount points would be root's). Link them in.
+if [ "$name" = .credentials.json ] && [ -d /skills ]; then
+  mkdir -p "$home/skills"
+  for d in /skills/*/; do
+    [ -d "$d" ] || continue
+    d=${d%/}
+    ln -sfn "$d" "$home/skills/${d##*/}"
+  done
 fi
 # What a kept home used to remember, fixed: first-run screens done and
 # /workspace trusted. Written only if absent.

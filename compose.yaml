@@ -1,4 +1,6 @@
-name: gm-sls-agent
+# No project name: start.sh runs as project agent-box, drive.sh as the
+# project it is given (gauge-run-<loop>-<attempt>). Every project gets its
+# own networks, proxies and workspace; the auth volumes are shared by name.
 
 # What every agent service shares. Each service adds only its own
 # auth volumes, so neither agent can read the other's token. The home
@@ -44,7 +46,10 @@ x-agent-env: &agent-env
 
 services:
   proxy:
-    build: ./proxy
+    build:
+      context: ./proxy
+      args:
+        BOX_SUBNET: ${BOX_SUBNET:-10.77.0.0/24}
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
@@ -59,7 +64,7 @@ services:
       context: ./proxy
       args:
         ALLOWLIST: allowlist-codex
-        BOX_SUBNET: 10.77.1.0/24
+        BOX_SUBNET: ${BOX_CODEX_SUBNET:-10.77.1.0/24}
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
@@ -87,7 +92,6 @@ services:
       - claude-auth-out:/auth-out
       - pnpm-store:/home/node/.local/share/pnpm
       - ./bundles:/bundles:ro
-      - ./managed-settings.json:/etc/claude-code/managed-settings.json:ro
 
   codex:
     <<: *agent
@@ -127,22 +131,28 @@ networks:
     internal: true
     ipam:
       config:
-        - subnet: 10.77.0.0/24
+        - subnet: ${BOX_SUBNET:-10.77.0.0/24}
   box-codex:
     internal: true
     ipam:
       config:
-        - subnet: 10.77.1.0/24
+        - subnet: ${BOX_CODEX_SUBNET:-10.77.1.0/24}
   egress: {}
 
+# The auth volumes are external and named, so every project (the desk's and
+# each attempt's) uses one sign-in. Create them once; see README.md.
 volumes:
   workspace: {}
-  claude-auth: {}
-  claude-auth-out: {}
-  codex-auth: {}
-  codex-auth-out: {}
   pnpm-store: {}
-  # The kept homes from before D8. No service mounts them; they stay until
-  # the auth volumes are verified, then go with docker volume rm.
-  claude-config: {}
-  codex-home: {}
+  claude-auth:
+    external: true
+    name: agent-box-claude-auth
+  claude-auth-out:
+    external: true
+    name: agent-box-claude-auth-out
+  codex-auth:
+    external: true
+    name: agent-box-codex-auth
+  codex-auth-out:
+    external: true
+    name: agent-box-codex-auth-out
