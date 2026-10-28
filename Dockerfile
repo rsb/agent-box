@@ -31,8 +31,11 @@ RUN npx -y "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium \
 COPY --chmod=755 entrypoint.sh /usr/local/bin/agent-entrypoint
 COPY --chmod=755 auth-sync.sh /usr/local/bin/auth-sync
 # Create the directory first: COPY --chmod would give it 644 too.
-RUN install -d -m 755 /etc/codex
+RUN install -d -m 755 /etc/codex /etc/claude-code
 COPY --chmod=644 codex/managed_config.toml codex/requirements.toml /etc/codex/
+# Baked, not mounted: a driver launch mounts no host path but the attempt's
+# and the skills (drive.sh). The launchers build before every run.
+COPY --chmod=644 managed-settings.json /etc/claude-code/
 # Mount points for the named volumes, owned by node so a new volume is too.
 RUN mkdir -p /workspace /auth /auth-out /home/node/.local/share/pnpm \
   && chown -R node:node /workspace /auth /auth-out /home/node

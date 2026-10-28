@@ -1,0 +1,34 @@
+# A driver launch: compose.yaml with this on top, run by drive.sh only.
+# The agent gets no terminal, and its host paths are the attempt's and the
+# three skills, nothing else: no bundles, no other host path. Missing paths
+# fail the launch instead of being created (long syntax binds).
+services:
+  agent:
+    stdin_open: false
+    tty: false
+    volumes: !override
+      - type: bind
+        source: ${ATTEMPT_DIR:?}/repo
+        target: /workspace
+      - type: bind
+        source: ${ATTEMPT_DIR:?}/run/brief.json
+        target: /run/brief.json
+        read_only: true
+      - type: bind
+        source: ${ATTEMPT_DIR:?}/run/outbox
+        target: /run/outbox
+      - type: bind
+        source: ${RSB_SKILLS:?}/skills/engineering/implement
+        target: /skills/implement
+        read_only: true
+      - type: bind
+        source: ${RSB_SKILLS:?}/skills/engineering/tdd
+        target: /skills/tdd
+        read_only: true
+      - type: bind
+        source: ${RSB_SKILLS:?}/skills/engineering/rsb-code-review
+        target: /skills/rsb-code-review
+        read_only: true
+      - claude-auth:/auth:ro
+      - claude-auth-out:/auth-out
+      - pnpm-store:/home/node/.local/share/pnpm

@@ -2,12 +2,15 @@
 # Copy a branch out of the box and fetch it into the owner's clone as
 # agent/<branch>, with hooks and fsmonitor off. Nothing is pushed.
 # Usage: ./bundle-out.sh <branch>
+# Environment: AGENT_NAME, AGENT_EMAIL and OWNER_CLONE, as for start.sh.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# shellcheck source=/dev/null
-. "${GM_SLS_AGENT_ENV:-$HOME/.config/gm-sls-agent/app.env}"
-: "${AGENT_NAME:?set in app.env}" "${AGENT_EMAIL:?set in app.env}" "${OWNER_CLONE:?set in app.env}"
+# The bot identity and the owner's clone come from the environment.
+: "${AGENT_NAME:?set the bot identity in the environment}" "${AGENT_EMAIL:?set the bot identity in the environment}"
+: "${OWNER_CLONE:?set OWNER_CLONE to the clone to bundle from}"
+# The desk's project; drive.sh runs each attempt as its own.
+export COMPOSE_PROJECT_NAME=agent-box
 branch=${1:?usage: bundle-out.sh <branch>}
 
 export AGENT_NAME AGENT_EMAIL
