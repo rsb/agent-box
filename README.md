@@ -13,8 +13,9 @@ prompts. A run can change what it was given (its workspace, and for an
 unattended run its outbox) and talk to the allowlisted hosts, and
 nothing else.
 
-It is a small set of shell scripts and two compose files. It is not a
-product. It was written for one person's workflow and is published as-is.
+It is a small set of shell scripts and two compose files, built as the
+sandbox component of `rsb-workflow`, a software factory. It also runs on
+its own: `start.sh` needs nothing from the rest of the factory.
 
 ## Contents
 
