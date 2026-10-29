@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="779" viewBox="0 0 760 779" role="img">
+<title>agent-box: a desk run</title>
+<desc>A desk run. You run start.sh on a branch; it refuses unless agent-box is on a clean main, builds the image, bundles the branch from your clone and runs the agent container, which starts the proxy first. On first start the container clones the bundle into /workspace, removes origin and sets core.hooksPath; it refuses to start without the OAuth token. While the agent works, every CONNECT to port 443 goes through the proxy, which tunnels only allowlisted hosts. The agent commits as AGENT_NAME and its exit code becomes start.sh's. Then bundle-out.sh has the container write a bundle to stdout, fetches it into your clone as agent/&lt;branch&gt; with hooks off, and you review and push it yourself.</desc>
+<style>
+text{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#3d3d3a}
+.th{font-size:13px;font-weight:600}.ts{font-size:12px}.tx{font-size:11px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px}
+.bg{fill:#ffffff}
+.box{fill:#f1efe8;stroke:#888780}.frame{fill:none;stroke:#888780;stroke-dasharray:4 4}
+.p{fill:#eeedfe;stroke:#534ab7}.pt{fill:#3c3489}
+.g{fill:#e1f5ee;stroke:#0f6e56}.gt{fill:#085041}
+.a{fill:#faeeda;stroke:#ba7517}.at{fill:#633806}
+.ref{fill:none;stroke:#534ab7;stroke-dasharray:4 3}
+.e{fill:none;stroke:#888780;stroke-width:1.2}.d{stroke-dasharray:5 4}
+.lane{stroke:#b4b2a9;stroke-width:1;stroke-dasharray:3 4}
+.lbl{font-size:11px;fill:#5f5e5a}
+.loopf{fill:none;stroke:#ba7517;stroke-width:1}.loopt{font-size:11px;font-weight:600;fill:#854f0b}
+.ah{fill:#888780}
+@media (prefers-color-scheme:dark){
+text{fill:#c2c0b6}.bg{fill:#0d1117}
+.box{fill:#2c2c2a;stroke:#888780}
+.p{fill:#3c3489;stroke:#afa9ec}.pt{fill:#eeedfe}
+.g{fill:#085041;stroke:#5dcaa5}.gt{fill:#e1f5ee}
+.a{fill:#633806;stroke:#ef9f27}.at{fill:#faeeda}
+.ref{stroke:#afa9ec}
+.lane{stroke:#5f5e5a}.lbl{fill:#9a9890}
+.loopf{stroke:#ef9f27}.loopt{fill:#fac775}}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<line class="lane" x1="80.0" y1="60" x2="80.0" y2="763"/>
+<line class="lane" x1="200.0" y1="60" x2="200.0" y2="763"/>
+<line class="lane" x1="320.0" y1="60" x2="320.0" y2="763"/>
+<line class="lane" x1="440.0" y1="60" x2="440.0" y2="763"/>
+<line class="lane" x1="560.0" y1="60" x2="560.0" y2="763"/>
+<line class="lane" x1="680.0" y1="60" x2="680.0" y2="763"/>
+<rect class="a" x="27.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts at" x="80.0" y="44.0" text-anchor="middle">You</text>
+<rect class="box" x="147.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts " x="200.0" y="44.0" text-anchor="middle">start.sh</text>
+<rect class="box" x="267.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts " x="320.0" y="44.0" text-anchor="middle">bundle-out.sh</text>
+<rect class="a" x="387.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts at" x="440.0" y="44.0" text-anchor="middle">Your clone</text>
+<rect class="p" x="507.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts pt" x="560.0" y="36.0" text-anchor="middle">agent</text>
+<text class="tx pt" x="560.0" y="52.0" text-anchor="middle">container</text>
+<rect class="g" x="627.0" y="20" width="106.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts gt" x="680.0" y="44.0" text-anchor="middle">proxy</text>
+<rect class="bg" x="47.55000000000001" y="71" width="184.89999999999998" height="15" rx="3"/><text class="lbl" x="140.0" y="82" text-anchor="middle">./start.sh [--fresh] &lt;branch&gt;</text>
+<path class="e" d="M80.0 91 L199.2 91" marker-end="url(#m)"/>
+<rect class="box" x="85.0" y="105" width="230.0" height="42" rx="6" stroke-width="0.6"/>
+<text class="tx" x="94.0" y="121">Refuse unless agent-box is on a</text>
+<text class="tx" x="94.0" y="136">clean main. Build the agent image.</text>
+<rect class="bg" x="181.8" y="162" width="276.4" height="15" rx="3"/><text class="lbl" x="320.0" y="173" text-anchor="middle">git bundle create bundles/in.bundle &lt;branch&gt;</text>
+<path class="e" d="M200.0 182 L439.2 182" marker-end="url(#m)"/>
+<rect class="bg" x="223.5" y="197" width="313.0" height="15" rx="3"/><text class="lbl" x="380.0" y="208" text-anchor="middle">docker compose run --rm agent (starts proxy first)</text>
+<path class="e" d="M200.0 217 L559.2 217" marker-end="url(#m)"/>
+<rect class="box" x="445.0" y="231" width="230.0" height="57" rx="6" stroke-width="0.6"/>
+<text class="tx" x="454.0" y="247">First start only: clone in.bundle</text>
+<text class="tx" x="454.0" y="262">to /workspace, remove origin, set</text>
+<text class="tx" x="454.0" y="277">core.hooksPath = .githooks.</text>
+<rect class="box" x="445.0" y="302" width="230.0" height="72" rx="6" stroke-width="0.6"/>
+<text class="tx" x="454.0" y="318">Refuse without</text>
+<text class="tx" x="454.0" y="333">CLAUDE_CODE_OAUTH_TOKEN. Create</text>
+<text class="tx" x="454.0" y="348">the empty home, mark /workspace</text>
+<text class="tx" x="454.0" y="363">trusted.</text>
+<rect class="bg" x="567.2" y="411" width="105.6" height="15" rx="3"/><text class="lbl" x="620.0" y="422" text-anchor="middle">CONNECT host:443</text>
+<path class="e" d="M560.0 431 L679.2 431" marker-end="url(#m)"/>
+<rect class="bg" x="512.3" y="446" width="215.39999999999998" height="15" rx="3"/><text class="lbl" x="620.0" y="457" text-anchor="middle">tunnel if allowlisted, else denied</text>
+<path class="e d" d="M680.0 466 L560.8 466" marker-end="url(#m)"/>
+<rect class="loopf" x="28" y="386" width="704" height="98" rx="6"/>
+<rect class="bg" x="36" y="390" width="186.8" height="16"/>
+<text class="loopt" x="42" y="402">loop  while the agent works</text>
+<rect class="box" x="445.0" y="492" width="230.0" height="27" rx="6" stroke-width="0.6"/>
+<text class="tx" x="454.0" y="508">Commits as AGENT_NAME on &lt;branch&gt;.</text>
+<rect class="bg" x="272.3" y="534" width="215.39999999999998" height="15" rx="3"/><text class="lbl" x="380.0" y="545" text-anchor="middle">exit code (start.sh exits with it)</text>
+<path class="e d" d="M560.0 554 L200.8 554" marker-end="url(#m)"/>
+<rect class="bg" x="122.80000000000001" y="569" width="154.39999999999998" height="15" rx="3"/><text class="lbl" x="200.0" y="580" text-anchor="middle">./bundle-out.sh &lt;branch&gt;</text>
+<path class="e" d="M80.0 589 L319.2 589" marker-end="url(#m)"/>
+<rect class="bg" x="317.05" y="604" width="245.89999999999998" height="15" rx="3"/><text class="lbl" x="440.0" y="615" text-anchor="middle">run agent: git bundle create - &lt;branch&gt;</text>
+<path class="e" d="M320.0 624 L559.2 624" marker-end="url(#m)"/>
+<rect class="bg" x="356.7" y="639" width="166.6" height="15" rx="3"/><text class="lbl" x="440.0" y="650" text-anchor="middle">bundle on stdout, saved as</text>
+<rect class="bg" x="381.1" y="653" width="117.8" height="15" rx="3"/><text class="lbl" x="440.0" y="664" text-anchor="middle">bundles/out.bundle</text>
+<path class="e d" d="M560.0 673 L320.8 673" marker-end="url(#m)"/>
+<rect class="bg" x="257.05" y="688" width="245.89999999999998" height="15" rx="3"/><text class="lbl" x="380.0" y="699" text-anchor="middle">git fetch as agent/&lt;branch&gt; (hooks off)</text>
+<path class="e" d="M320.0 708 L439.2 708" marker-end="url(#m)"/>
+<rect class="bg" x="137.05" y="723" width="245.89999999999998" height="15" rx="3"/><text class="lbl" x="260.0" y="734" text-anchor="middle">review agent/&lt;branch&gt;, push it yourself</text>
+<path class="e" d="M80.0 743 L439.2 743" marker-end="url(#m)"/>
+</svg>
