@@ -28,6 +28,7 @@ product. It was written for one person's workflow and is published as-is.
 - [Files](#files)
 - [Limits and non-goals](#limits-and-non-goals)
 - [The owner's workflow](#the-owners-workflow)
+- [License](#license)
 
 ## Security model
 
@@ -448,3 +449,7 @@ interactive work and for signing Codex in.
 
 Contributor and agent rules for this repository are in
 [`AGENTS.md`](AGENTS.md).
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
