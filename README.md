@@ -8,7 +8,7 @@ the box, runs the agent, and does all GitHub actions on the host.
 ## Layout
 
 - `Dockerfile`: the image. Node 24, pnpm, Claude Code and Codex pinned,
-  sqld, Playwright Chromium. Shaped for gm-serverless; lumen needs its own.
+  sqld, Playwright Chromium. Shaped for one Node project; others need their own (see Planned).
 - `compose.yaml`: `agent` (Claude Code) and `codex` share one shape:
   user 1000, read-only root, tmpfs, no capabilities, the repo on a named
   volume. Each gets only its own sign-in (see Sign-in) and sits on its own
