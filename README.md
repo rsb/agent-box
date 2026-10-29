@@ -161,88 +161,11 @@ The desk setup from `compose.yaml`, as `start.sh` and `bundle-out.sh` use
 it. Every compose project gets its own copy of the networks, proxies and
 workspace. Only the two Codex auth volumes are shared, by name.
 
-```mermaid
-flowchart LR
-  subgraph host["Host"]
-    clone["Your git clone<br/>(OWNER_CLONE)"]
-    bundles["./bundles/<br/>in.bundle, out.bundle"]
-    envfile["Token env file, mode 600<br/>CLAUDE_CODE_OAUTH_TOKEN"]
-  end
-
-  subgraph boxnet["network box: internal, BOX_SUBNET"]
-    agent["agent<br/>Claude Code"]
-  end
-  subgraph codexnet["network box-codex: internal, BOX_CODEX_SUBNET"]
-    codex["codex<br/>Codex CLI"]
-  end
-
-  proxy["proxy<br/>tinyproxy + allowlist"]
-  proxyc["proxy-codex<br/>tinyproxy + allowlist-codex<br/>(alias proxy)"]
-  sync["codex-auth-sync<br/>network: none"]
-
-  subgraph egress["network egress"]
-    hosts(("Allowlisted hosts<br/>CONNECT to :443 only"))
-  end
-
-  ws[("workspace volume<br/>/workspace")]
-  pnpm[("pnpm-store volume")]
-  cauth[("agent-box-codex-auth<br/>external")]
-  cout[("agent-box-codex-auth-out<br/>external")]
-
-  clone -- "start.sh: git bundle create" --> bundles
-  bundles -- "/bundles, read-only" --> agent
-  bundles -- "/bundles, read-only" --> codex
-  envfile -- "env_file" --> agent
-
-  agent --- ws
-  codex --- ws
-  agent --- pnpm
-  codex --- pnpm
-
-  agent -- "HTTPS_PROXY" --> proxy
-  codex -- "HTTPS_PROXY" --> proxyc
-  proxy --> hosts
-  proxyc --> hosts
-
-  cauth -- "/auth, read-only" --> codex
-  codex -- "/auth-out, if changed" --> cout
-  cout -- "checked copy" --> sync
-  sync -- "write back" --> cauth
-
-  ws -- "bundle-out.sh: git bundle to stdout" --> bundles
-  bundles -- "git fetch as agent/branch" --> clone
-```
+<img src="docs/parts.svg" alt="The parts: the host holds the token env file, ./bundles/ and your clone; the agent and codex containers each sit on their own internal network, mount /bundles read-only and share the workspace and pnpm-store volumes; each reaches allowlisted hosts on :443 only through its own tinyproxy; Codex sign-in moves between two external volumes through codex-auth-sync, which has no network." width="760">
 
 ### A desk run, step by step
 
-```mermaid
-sequenceDiagram
-  actor You
-  participant S as start.sh
-  participant C as Your clone
-  participant P as proxy
-  participant A as agent container
-  participant B as bundle-out.sh
-
-  You->>S: ./start.sh [--fresh] branch
-  S->>S: refuse unless agent-box is on a clean main
-  S->>C: git bundle create bundles/in.bundle branch
-  S->>S: docker compose build agent
-  S->>A: docker compose run --rm agent (starts proxy first)
-  A->>A: first start only: clone in.bundle to /workspace,<br/>remove origin, core.hooksPath = .githooks
-  A->>A: refuse to start claude without CLAUDE_CODE_OAUTH_TOKEN,<br/>create the empty home, mark /workspace trusted
-  loop while the agent works
-    A->>P: CONNECT host:443
-    P-->>A: tunnel if allowlisted, otherwise denied
-  end
-  A->>A: commits as AGENT_NAME on branch
-  A-->>S: exit code (start.sh exits with it)
-  You->>B: ./bundle-out.sh branch
-  B->>A: run agent: git bundle create - branch
-  A-->>B: bundle on stdout, saved as bundles/out.bundle
-  B->>C: git fetch out.bundle +branch:agent/branch (hooks off)
-  You->>C: review agent/branch, push it yourself
-```
+<img src="docs/desk-run.svg" alt="A desk run: start.sh checks for a clean main, bundles the branch and runs the agent; the agent reaches only allowlisted hosts through the proxy; bundle-out.sh fetches the result into your clone as agent/&lt;branch&gt; with hooks off, and you push it yourself." width="760">
 
 The agent runs as a child of the entrypoint, not with `exec`, so stop
 signals reach it and the entrypoint can still act after it exits. That is
@@ -306,29 +229,7 @@ networks, so attempts and the desk can run at the same time. If two
 launches pick the same subnet, Docker refuses the second, which picks
 again (up to five tries).
 
-```mermaid
-sequenceDiagram
-  participant U as Supervisor (e.g. systemd-run)
-  participant D as drive.sh
-  participant P as proxy
-  participant A as agent container
-
-  U->>D: drive.sh project attempt-dir prompt
-  D->>D: check clean main, paths, env file mode 600, brief/v1
-  D->>D: docker compose build agent
-  D->>D: pick two free /24s in 10.77.0.0/16,<br/>create the project (retry on overlap)
-  D->>P: docker compose up -d proxy
-  D->>A: docker compose run agent claude -p prompt (no TTY, stdin /dev/null)
-  A->>A: works in /workspace = attempt-dir/repo,<br/>writes results to /run/outbox
-  A->>P: CONNECT allowlisted hosts:443
-  opt supervisor stops the run
-    U->>D: SIGTERM
-    D->>A: docker stop -t 30
-  end
-  A-->>D: exit code
-  D->>D: docker compose down --rmi local -v
-  D-->>U: the agent's exit code
-```
+<img src="docs/drive-run.svg" alt="An unattended run: a supervisor starts drive.sh, which checks the checkout and attempt directory, creates a compose project on two free subnets, starts the proxy and runs claude -p with no TTY; a SIGTERM becomes docker stop -t 30; on exit the project is torn down and the agent exit code returned." width="760">
 
 `drive.sh` runs Claude only; it has no Codex mode.
 

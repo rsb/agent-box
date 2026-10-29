@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="764" viewBox="0 0 760 764" role="img">
+<title>agent-box: the parts</title>
+<desc>The desk setup from compose.yaml. On the host: the token env file (mode 600), ./bundles/ and your git clone; start.sh bundles a branch into in.bundle and bundle-out.sh fetches out.bundle back. The agent (Claude Code) and codex containers each sit on their own internal network with no route out, mount /bundles read-only and share the workspace and pnpm-store volumes. Each reaches the internet only through its own tinyproxy, which allows CONNECT to port 443 on allowlisted hosts. Codex's sign-in lives on the external volume agent-box-codex-auth, read-only in the container; a changed auth.json goes to agent-box-codex-auth-out, and codex-auth-sync, with no network, copies a checked version back.</desc>
+<style>
+text{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#3d3d3a}
+.th{font-size:13px;font-weight:600}.ts{font-size:12px}.tx{font-size:11px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px}
+.bg{fill:#ffffff}
+.box{fill:#f1efe8;stroke:#888780}.frame{fill:none;stroke:#888780;stroke-dasharray:4 4}
+.p{fill:#eeedfe;stroke:#534ab7}.pt{fill:#3c3489}
+.g{fill:#e1f5ee;stroke:#0f6e56}.gt{fill:#085041}
+.a{fill:#faeeda;stroke:#ba7517}.at{fill:#633806}
+.ref{fill:none;stroke:#534ab7;stroke-dasharray:4 3}
+.e{fill:none;stroke:#888780;stroke-width:1.2}.d{stroke-dasharray:5 4}
+.lane{stroke:#b4b2a9;stroke-width:1;stroke-dasharray:3 4}
+.lbl{font-size:11px;fill:#5f5e5a}
+.loopf{fill:none;stroke:#ba7517;stroke-width:1}.loopt{font-size:11px;font-weight:600;fill:#854f0b}
+.ah{fill:#888780}
+@media (prefers-color-scheme:dark){
+text{fill:#c2c0b6}.bg{fill:#0d1117}
+.box{fill:#2c2c2a;stroke:#888780}
+.p{fill:#3c3489;stroke:#afa9ec}.pt{fill:#eeedfe}
+.g{fill:#085041;stroke:#5dcaa5}.gt{fill:#e1f5ee}
+.a{fill:#633806;stroke:#ef9f27}.at{fill:#faeeda}
+.ref{stroke:#afa9ec}
+.lane{stroke:#5f5e5a}.lbl{fill:#9a9890}
+.loopf{stroke:#ef9f27}.loopt{fill:#fac775}}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<rect class="frame" x="20" y="16" width="720" height="108" rx="12" stroke-width="0.8"/><text class="tx" x="32" y="33" font-weight="600">Host</text>
+<rect class="a" x="40" y="46" width="190" height="62" rx="8" stroke-width="0.8"/>
+<text class="ts at" x="135.0" y="65.0" text-anchor="middle">Token env file</text>
+<text class="tx at" x="135.0" y="81.0" text-anchor="middle">mode 600</text>
+<text class="mono at" x="135.0" y="97.0" text-anchor="middle">CLAUDE_CODE_OAUTH_TOKEN</text>
+<rect class="box" x="285" y="46" width="160" height="62" rx="8" stroke-width="0.8"/>
+<text class="ts " x="365.0" y="73.0" text-anchor="middle">./bundles/</text>
+<text class="tx " x="365.0" y="89.0" text-anchor="middle">in.bundle, out.bundle</text>
+<rect class="a" x="545" y="46" width="175" height="62" rx="8" stroke-width="0.8"/>
+<text class="ts at" x="632.5" y="73.0" text-anchor="middle">Your git clone</text>
+<text class="mono at" x="632.5" y="89.0" text-anchor="middle">OWNER_CLONE</text>
+<path class="e" d="M545 68 L447 68" marker-end="url(#m)"/>
+<path class="e" d="M447 90 L545 90" marker-end="url(#m)"/>
+<text class="lbl" x="496" y="62" text-anchor="middle">start.sh</text>
+<text class="lbl" x="496" y="106" text-anchor="middle">bundle-out.sh</text>
+<path class="e" d="M200 108 L200 228" marker-end="url(#m)"/>
+<text class="lbl" x="195" y="180" text-anchor="end">env_file</text>
+<path class="e" d="M330 108 L330 140 L245 140 L245 228" marker-end="url(#m)"/>
+<path class="e" d="M430 108 L430 140 L680 140 L680 228" marker-end="url(#m)"/>
+<text class="lbl" x="252" y="180" text-anchor="start">/bundles (ro)</text>
+<text class="lbl" x="674" y="180" text-anchor="end">/bundles (ro)</text>
+<path class="e" d="M380 206 L380 110" marker-end="url(#m)"/>
+<rect class="bg" x="345.5" y="154" width="69.0" height="15" rx="3"/><text class="lbl" x="380" y="165" text-anchor="middle">out.bundle</text>
+<rect class="frame" x="20" y="196" width="280" height="120" rx="12" stroke-width="0.8"/><text class="tx" x="32" y="213" font-weight="600">network box · internal</text>
+<rect class="p" x="60" y="228" width="200" height="60" rx="8" stroke-width="0.8"/>
+<text class="th pt" x="160.0" y="254.0" text-anchor="middle">agent</text>
+<text class="tx pt" x="160.0" y="270.0" text-anchor="middle">Claude Code</text>
+<rect class="frame" x="460" y="196" width="280" height="120" rx="12" stroke-width="0.8"/><text class="tx" x="472" y="213" font-weight="600">network box-codex · internal</text>
+<rect class="p" x="500" y="228" width="200" height="60" rx="8" stroke-width="0.8"/>
+<text class="th pt" x="600.0" y="254.0" text-anchor="middle">codex</text>
+<text class="tx pt" x="600.0" y="270.0" text-anchor="middle">Codex CLI</text>
+<rect class="box" x="320" y="206" width="120" height="44" rx="8" stroke-width="0.8"/>
+<text class="ts " x="380.0" y="224.0" text-anchor="middle">workspace</text>
+<text class="mono " x="380.0" y="240.0" text-anchor="middle">/workspace</text>
+<rect class="box" x="320" y="262" width="120" height="44" rx="8" stroke-width="0.8"/>
+<text class="ts " x="380.0" y="280.0" text-anchor="middle">pnpm-store</text>
+<text class="tx " x="380.0" y="296.0" text-anchor="middle">volume</text>
+<path class="e" d="M260 240 L320 228"/><path class="e" d="M440 228 L500 240"/>
+<path class="e" d="M260 276 L320 284"/><path class="e" d="M440 284 L500 276"/>
+<rect class="g" x="60" y="352" width="200" height="56" rx="8" stroke-width="0.8"/>
+<text class="th gt" x="160.0" y="376.0" text-anchor="middle">proxy</text>
+<text class="tx gt" x="160.0" y="392.0" text-anchor="middle">tinyproxy + allowlist</text>
+<rect class="g" x="500" y="352" width="200" height="56" rx="8" stroke-width="0.8"/>
+<text class="th gt" x="600.0" y="376.0" text-anchor="middle">proxy-codex</text>
+<text class="tx gt" x="600.0" y="392.0" text-anchor="middle">tinyproxy + allowlist-codex</text>
+<path class="e" d="M160 288 L160 352" marker-end="url(#m)"/>
+<path class="e" d="M600 288 L600 352" marker-end="url(#m)"/>
+<rect class="bg" x="104.15" y="325" width="111.69999999999999" height="15" rx="3"/><text class="lbl" x="160" y="336" text-anchor="middle">HTTPS_PROXY :3128</text>
+<rect class="bg" x="519.75" y="325" width="160.5" height="15" rx="3"/><text class="lbl" x="600" y="336" text-anchor="middle">HTTPS_PROXY (alias proxy)</text>
+<rect class="frame" x="20" y="440" width="720" height="82" rx="12" stroke-width="0.8"/><text class="tx" x="32" y="457" font-weight="600">network egress</text>
+<rect class="box" x="240" y="462" width="280" height="44" rx="8" stroke-width="0.8"/>
+<text class="ts " x="380.0" y="480.0" text-anchor="middle">Allowlisted hosts</text>
+<text class="tx " x="380.0" y="496.0" text-anchor="middle">CONNECT to :443 only</text>
+<path class="e" d="M160 408 L160 484 L240 484" marker-end="url(#m)"/>
+<path class="e" d="M600 408 L600 484 L520 484" marker-end="url(#m)"/>
+<rect class="frame" x="20" y="552" width="720" height="196" rx="12" stroke-width="0.8"/><text class="tx" x="32" y="569" font-weight="600">Codex sign-in · external volumes shared by every compose project</text>
+<rect class="box" x="40" y="588" width="180" height="56" rx="8" stroke-width="0.8"/>
+<text class="mono " x="130.0" y="612.0" text-anchor="middle">agent-box-codex-auth</text>
+<text class="tx " x="130.0" y="628.0" text-anchor="middle">external volume</text>
+<rect class="ref" x="300" y="588" width="160" height="56" rx="8" stroke-width="0.8"/>
+<text class="th pt" x="380.0" y="612.0" text-anchor="middle">codex</text>
+<text class="tx pt" x="380.0" y="628.0" text-anchor="middle">same container as above</text>
+<rect class="box" x="540" y="588" width="180" height="56" rx="8" stroke-width="0.8"/>
+<text class="mono " x="630.0" y="612.0" text-anchor="middle">agent-box-codex-auth-out</text>
+<text class="tx " x="630.0" y="628.0" text-anchor="middle">external volume</text>
+<rect class="g" x="300" y="676" width="160" height="56" rx="8" stroke-width="0.8"/>
+<text class="ts gt" x="380.0" y="700.0" text-anchor="middle">codex-auth-sync</text>
+<text class="tx gt" x="380.0" y="716.0" text-anchor="middle">network: none</text>
+<path class="e" d="M220 616 L300 616" marker-end="url(#m)"/>
+<text class="lbl" x="260" y="608" text-anchor="middle">/auth (ro)</text>
+<path class="e" d="M460 616 L540 616" marker-end="url(#m)"/>
+<text class="lbl" x="500" y="608" text-anchor="middle">if changed</text>
+<path class="e" d="M630 644 L630 704 L460 704" marker-end="url(#m)"/>
+<text class="lbl" x="545" y="696" text-anchor="middle">checked copy</text>
+<path class="e" d="M300 704 L130 704 L130 644" marker-end="url(#m)"/>
+<text class="lbl" x="215" y="696" text-anchor="middle">write back</text>
+</svg>

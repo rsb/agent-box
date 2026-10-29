@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="674" viewBox="0 0 760 674" role="img">
+<title>agent-box: an unattended run</title>
+<desc>An unattended run. A supervisor such as systemd-run starts drive.sh with a project, an attempt directory and a prompt. drive.sh checks the checkout is a clean main, every path exists and is not a symlink, the env file is mode 600 and the brief is brief/v1, builds the image, picks two free /24 subnets and creates the project, starts the proxy and runs claude -p with no TTY. The agent works in the attempt's repo and writes results to the outbox, reaching only allowlisted hosts through the proxy. If the supervisor sends SIGTERM, drive.sh runs docker stop with a 30-second grace period. On exit it tears the project down, images and volumes included, and returns the agent's exit code.</desc>
+<style>
+text{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#3d3d3a}
+.th{font-size:13px;font-weight:600}.ts{font-size:12px}.tx{font-size:11px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px}
+.bg{fill:#ffffff}
+.box{fill:#f1efe8;stroke:#888780}.frame{fill:none;stroke:#888780;stroke-dasharray:4 4}
+.p{fill:#eeedfe;stroke:#534ab7}.pt{fill:#3c3489}
+.g{fill:#e1f5ee;stroke:#0f6e56}.gt{fill:#085041}
+.a{fill:#faeeda;stroke:#ba7517}.at{fill:#633806}
+.ref{fill:none;stroke:#534ab7;stroke-dasharray:4 3}
+.e{fill:none;stroke:#888780;stroke-width:1.2}.d{stroke-dasharray:5 4}
+.lane{stroke:#b4b2a9;stroke-width:1;stroke-dasharray:3 4}
+.lbl{font-size:11px;fill:#5f5e5a}
+.loopf{fill:none;stroke:#ba7517;stroke-width:1}.loopt{font-size:11px;font-weight:600;fill:#854f0b}
+.ah{fill:#888780}
+@media (prefers-color-scheme:dark){
+text{fill:#c2c0b6}.bg{fill:#0d1117}
+.box{fill:#2c2c2a;stroke:#888780}
+.p{fill:#3c3489;stroke:#afa9ec}.pt{fill:#eeedfe}
+.g{fill:#085041;stroke:#5dcaa5}.gt{fill:#e1f5ee}
+.a{fill:#633806;stroke:#ef9f27}.at{fill:#faeeda}
+.ref{stroke:#afa9ec}
+.lane{stroke:#5f5e5a}.lbl{fill:#9a9890}
+.loopf{stroke:#ef9f27}.loopt{fill:#fac775}}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+<line class="lane" x1="110.0" y1="60" x2="110.0" y2="658"/>
+<line class="lane" x1="290.0" y1="60" x2="290.0" y2="658"/>
+<line class="lane" x1="470.0" y1="60" x2="470.0" y2="658"/>
+<line class="lane" x1="650.0" y1="60" x2="650.0" y2="658"/>
+<rect class="a" x="27.0" y="20" width="166.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts at" x="110.0" y="36.0" text-anchor="middle">Supervisor</text>
+<text class="tx at" x="110.0" y="52.0" text-anchor="middle">e.g. systemd-run</text>
+<rect class="box" x="207.0" y="20" width="166.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts " x="290.0" y="44.0" text-anchor="middle">drive.sh</text>
+<rect class="p" x="387.0" y="20" width="166.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts pt" x="470.0" y="36.0" text-anchor="middle">agent</text>
+<text class="tx pt" x="470.0" y="52.0" text-anchor="middle">container</text>
+<rect class="g" x="567.0" y="20" width="166.0" height="40" rx="8" stroke-width="0.8"/>
+<text class="ts gt" x="650.0" y="44.0" text-anchor="middle">proxy</text>
+<rect class="bg" x="64.85" y="71" width="270.3" height="15" rx="3"/><text class="lbl" x="200.0" y="82" text-anchor="middle">drive.sh &lt;project&gt; &lt;attempt-dir&gt; '&lt;prompt&gt;'</text>
+<path class="e" d="M110.0 91 L289.2 91" marker-end="url(#m)"/>
+<rect class="box" x="165.0" y="105" width="250" height="57" rx="6" stroke-width="0.6"/>
+<text class="tx" x="174.0" y="121">Check: clean main, every path present</text>
+<text class="tx" x="174.0" y="136">and not a symlink, env file mode 600,</text>
+<text class="tx" x="174.0" y="151">brief/v1. Build the agent image.</text>
+<rect class="box" x="165.0" y="176" width="250" height="57" rx="6" stroke-width="0.6"/>
+<text class="tx" x="174.0" y="192">Pick two free /24s in 10.77.0.0/16 and</text>
+<text class="tx" x="174.0" y="207">create the project (retry on overlap,</text>
+<text class="tx" x="174.0" y="222">up to five tries).</text>
+<rect class="bg" x="386.7" y="248" width="166.6" height="15" rx="3"/><text class="lbl" x="470.0" y="259" text-anchor="middle">docker compose up -d proxy</text>
+<path class="e" d="M290.0 268 L649.2 268" marker-end="url(#m)"/>
+<rect class="bg" x="272.3" y="283" width="215.39999999999998" height="15" rx="3"/><text class="lbl" x="380.0" y="294" text-anchor="middle">docker compose run agent claude -p</text>
+<rect class="bg" x="266.2" y="297" width="227.6" height="15" rx="3"/><text class="lbl" x="380.0" y="308" text-anchor="middle">'&lt;prompt&gt;' (no TTY, stdin /dev/null)</text>
+<path class="e" d="M290.0 317 L469.2 317" marker-end="url(#m)"/>
+<rect class="box" x="345.0" y="331" width="250" height="57" rx="6" stroke-width="0.6"/>
+<text class="tx" x="354.0" y="347">Works in /workspace =</text>
+<text class="tx" x="354.0" y="362">&lt;attempt-dir&gt;/repo and writes results</text>
+<text class="tx" x="354.0" y="377">to /run/outbox.</text>
+<rect class="bg" x="470.6" y="403" width="178.79999999999998" height="15" rx="3"/><text class="lbl" x="560.0" y="414" text-anchor="middle">CONNECT allowlisted host:443</text>
+<path class="e" d="M470.0 423 L649.2 423" marker-end="url(#m)"/>
+<rect class="bg" x="174.65" y="460" width="50.699999999999996" height="15" rx="3"/><text class="lbl" x="200.0" y="471" text-anchor="middle">SIGTERM</text>
+<path class="e" d="M110.0 480 L289.2 480" marker-end="url(#m)"/>
+<rect class="bg" x="324.15" y="495" width="111.69999999999999" height="15" rx="3"/><text class="lbl" x="380.0" y="506" text-anchor="middle">docker stop -t 30</text>
+<path class="e" d="M290.0 515 L469.2 515" marker-end="url(#m)"/>
+<rect class="loopf" x="28" y="435" width="704" height="98" rx="6"/>
+<rect class="bg" x="36" y="439" width="199.60000000000002" height="16"/>
+<text class="loopt" x="42" y="451">opt  supervisor stops the run</text>
+<rect class="bg" x="348.55" y="542" width="62.9" height="15" rx="3"/><text class="lbl" x="380.0" y="553" text-anchor="middle">exit code</text>
+<path class="e d" d="M470.0 562 L290.8 562" marker-end="url(#m)"/>
+<rect class="box" x="165.0" y="576" width="250" height="27" rx="6" stroke-width="0.6"/>
+<text class="tx" x="174.0" y="592">docker compose down --rmi local -v</text>
+<rect class="bg" x="131.95" y="618" width="136.1" height="15" rx="3"/><text class="lbl" x="200.0" y="629" text-anchor="middle">the agent's exit code</text>
+<path class="e d" d="M290.0 638 L110.8 638" marker-end="url(#m)"/>
+</svg>
