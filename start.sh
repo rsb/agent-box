@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Bundle a branch out of the owner's clone and start the box on it.
-# No token: the box reaches nothing but the proxy, and commits carry
-# the bot identity through the git environment variables.
+# No GitHub token: the box reaches nothing but the proxy, and commits carry
+# the bot identity through the git environment variables. Claude's sign-in
+# is the token in the env file compose.yaml names (AGENT_BOX_CLAUDE_ENV).
 # Usage: ./start.sh [--fresh] [--codex] <branch> [command...]
 #   --fresh removes the workspace volume so the box clones the new bundle.
 #   --codex runs the codex service (default command codex) instead of
 #   agent (default command claude).
-# Environment: AGENT_NAME, AGENT_EMAIL (the bot identity for commits) and
-# OWNER_CLONE (the clone the branch is bundled from).
+# Environment: AGENT_NAME, AGENT_EMAIL (the bot identity for commits),
+# OWNER_CLONE (the clone the branch is bundled from) and, optionally,
+# AGENT_BOX_CLAUDE_ENV (default ~/.config/rsb/agent-box/claude.env).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -63,13 +65,19 @@ git -C "$OWNER_CLONE" bundle create "$PWD/bundles/in.bundle" "$branch"
 
 export BRANCH="$branch" AGENT_NAME AGENT_EMAIL
 
-# The home is per run (D8); only the auth file lasts. Write back first what
-# an interrupted run left in auth-out, then run, then write back this run's.
+# The home is per run (D8). Claude's sign-in is a token in its environment
+# and nothing comes back. Codex's auth file lasts: write back first what an
+# interrupted run left in auth-out, then run, then write back this run's.
 sync_auth() {
-  docker compose run --rm --no-deps -T "$service-auth-sync" </dev/null \
-    || echo "start.sh: $service-auth-sync failed; the stored sign-in was kept" >&2
+  [ "$service" = codex ] || return 0
+  docker compose run --rm --no-deps -T codex-auth-sync </dev/null \
+    || echo "start.sh: codex-auth-sync failed; the stored sign-in was kept" >&2
 }
-docker compose build "$service" "$service-auth-sync" >&2
+if [ "$service" = codex ]; then
+  docker compose build codex codex-auth-sync >&2
+else
+  docker compose build agent >&2
+fi
 sync_auth
 rc=0
 docker compose run --rm "$service" "$@" || rc=$?

@@ -1,11 +1,13 @@
 # No project name: start.sh runs as project agent-box, drive.sh as the
 # project it is given (gauge-run-<loop>-<attempt>). Every project gets its
-# own networks, proxies and workspace; the auth volumes are shared by name.
+# own networks, proxies and workspace. Claude signs in with a token from an
+# env file outside the repo; Codex's auth volumes are shared by name.
 
 # What every agent service shares. Each service adds only its own
-# auth volumes, so neither agent can read the other's token. The home
+# sign-in, so neither agent can read the other's. The home
 # (CLAUDE_CONFIG_DIR, CODEX_HOME) is on the /home/node tmpfs and starts
-# empty each run but for the auth file (D8, entrypoint.sh).
+# empty each run (D8, entrypoint.sh): Claude's holds no auth file at all,
+# Codex's only its auth.json.
 x-agent: &agent
   build: .
   user: "1000:1000"
@@ -75,21 +77,25 @@ services:
       box-codex:
         aliases: [proxy]
 
+  # Signs in with CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`), read
+  # from an env file outside every repo. AGENT_BOX_CLAUDE_ENV overrides the
+  # path. Not required, so codex runs without it; the entrypoint refuses to
+  # start claude with no token. Nothing is written back.
   agent:
     <<: *agent
     depends_on: [proxy]
     networks: [box]
+    env_file:
+      - path: ${AGENT_BOX_CLAUDE_ENV:-${HOME:?}/.config/rsb/agent-box/claude.env}
+        required: false
     environment:
       <<: *agent-env
       CLAUDE_CONFIG_DIR: /home/node/.claude
-      AGENT_AUTH: /home/node/.claude/.credentials.json
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
       CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1"
       DISABLE_AUTOUPDATER: "1"
     volumes:
       - workspace:/workspace
-      - claude-auth:/auth:ro
-      - claude-auth-out:/auth-out
       - pnpm-store:/home/node/.local/share/pnpm
       - ./bundles:/bundles:ro
 
@@ -109,16 +115,9 @@ services:
       - pnpm-store:/home/node/.local/share/pnpm
       - ./bundles:/bundles:ro
 
-  # Write a run's auth file back to its auth volume, after the agent's
-  # container has exited (start.sh runs them). No network, and nothing
-  # mounted but the two auth volumes of one agent.
-  agent-auth-sync:
-    <<: *auth-sync
-    command: [".credentials.json"]
-    volumes:
-      - claude-auth:/auth
-      - claude-auth-out:/auth-out
-
+  # Write a Codex run's auth file back to its auth volume, after the
+  # container has exited (start.sh runs it). No network, and nothing
+  # mounted but Codex's two auth volumes.
   codex-auth-sync:
     <<: *auth-sync
     command: ["auth.json"]
@@ -139,17 +138,12 @@ networks:
         - subnet: ${BOX_CODEX_SUBNET:-10.77.1.0/24}
   egress: {}
 
-# The auth volumes are external and named, so every project (the desk's and
-# each attempt's) uses one sign-in. Create them once; see README.md.
+# Codex's auth volumes are external and named, so every project (the
+# desk's and each attempt's) uses one sign-in. Create them once; see
+# README.md.
 volumes:
   workspace: {}
   pnpm-store: {}
-  claude-auth:
-    external: true
-    name: agent-box-claude-auth
-  claude-auth-out:
-    external: true
-    name: agent-box-claude-auth-out
   codex-auth:
     external: true
     name: agent-box-codex-auth

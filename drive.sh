@@ -12,6 +12,8 @@
 #   RSB_SKILLS               the rsb-skills checkout whose implement, tdd and
 #                            rsb-code-review skills are mounted read-only
 #                            (default ~/code/software/rsb/factory/rsb-skills)
+#   AGENT_BOX_CLAUDE_ENV     the env file holding CLAUDE_CODE_OAUTH_TOKEN
+#                            (default ~/.config/rsb/agent-box/claude.env)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -34,6 +36,7 @@ prompt=${3:?$usage}
 shift 3
 : "${AGENT_NAME:?set the bot identity in the environment}" "${AGENT_EMAIL:?set the bot identity in the environment}"
 RSB_SKILLS=${RSB_SKILLS:-$HOME/code/software/rsb/factory/rsb-skills}
+AGENT_BOX_CLAUDE_ENV=${AGENT_BOX_CLAUDE_ENV:-$HOME/.config/rsb/agent-box/claude.env}
 
 if ! [[ $project =~ ^[a-z0-9][a-z0-9_-]*$ ]] || [ "$project" = agent-box ]; then
   echo "drive.sh: project $project is not a compose project name, or is the desk's" >&2
@@ -55,6 +58,13 @@ if [ ! -f "$ATTEMPT_DIR/run/brief.json" ] || [ -L "$ATTEMPT_DIR/run/brief.json" 
   echo "drive.sh: $ATTEMPT_DIR/run/brief.json is not a regular file" >&2
   exit 2
 fi
+# The sign-in: a regular file, not a link, that only its owner can read.
+# Its contents are never read here; the entrypoint refuses an empty token.
+if [ ! -f "$AGENT_BOX_CLAUDE_ENV" ] || [ -L "$AGENT_BOX_CLAUDE_ENV" ] \
+  || [ -n "$(find "$AGENT_BOX_CLAUDE_ENV" -perm /077)" ]; then
+  echo "drive.sh: $AGENT_BOX_CLAUDE_ENV is not a regular file of mode 600 (see README.md, Sign-in)" >&2
+  exit 2
+fi
 if ! jq -e '.schema == "brief/v1" and .outbox_path == "/run/outbox"' \
   "$ATTEMPT_DIR/run/brief.json" >/dev/null; then
   echo "drive.sh: the brief is not brief/v1 with outbox_path /run/outbox" >&2
@@ -64,13 +74,11 @@ fi
 export COMPOSE_PROJECT_NAME=$project
 export COMPOSE_FILE=compose.yaml:compose.driver.yaml
 BRANCH=$(git -C "$ATTEMPT_DIR/repo" symbolic-ref --short -q HEAD || :)
-export ATTEMPT_DIR RSB_SKILLS AGENT_NAME AGENT_EMAIL BRANCH
+export ATTEMPT_DIR RSB_SKILLS AGENT_BOX_CLAUDE_ENV AGENT_NAME AGENT_EMAIL BRANCH
 cname=$project-agent
 
 # shellcheck disable=SC2317  # run by the EXIT trap
 cleanup() {
-  docker compose run --rm --no-deps -T agent-auth-sync </dev/null >&2 \
-    || echo "drive.sh: agent-auth-sync failed; the stored sign-in was kept" >&2
   docker compose down --rmi local -v --remove-orphans >&2 \
     || echo "drive.sh: could not take down project $project" >&2
 }
@@ -91,7 +99,7 @@ free_subnets() {
   echo "${out[@]}"
 }
 
-docker compose build agent agent-auth-sync >&2
+docker compose build agent >&2
 tries=0
 while :; do
   read -r BOX_SUBNET BOX_CODEX_SUBNET < <(free_subnets) || {
@@ -112,11 +120,8 @@ done
 trap cleanup EXIT
 
 echo "drive.sh: $project as $AGENT_NAME on ${BRANCH:-a detached head} in $ATTEMPT_DIR" >&2
-# Write back first what an interrupted run left in auth-out (start.sh does
-# the same), then run. The run is a child so a stop signal can reach the
-# container: docker stop lets the entrypoint copy a refreshed sign-in out.
-docker compose run --rm --no-deps -T agent-auth-sync </dev/null >&2 \
-  || echo "drive.sh: agent-auth-sync failed; the stored sign-in was kept" >&2
+# The run is a child so a stop signal can reach the container: docker stop
+# gives the agent its 30 s to exit.
 docker compose up -d proxy >&2
 docker compose run --rm --no-deps -T --name "$cname" agent \
   claude -p "$prompt" "$@" </dev/null &

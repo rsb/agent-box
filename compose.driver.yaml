@@ -1,11 +1,16 @@
 # A driver launch: compose.yaml with this on top, run by drive.sh only.
 # The agent gets no terminal, and its host paths are the attempt's and the
 # three skills, nothing else: no bundles, no other host path. Missing paths
-# fail the launch instead of being created (long syntax binds).
+# fail the launch instead of being created (long syntax binds). The sign-in
+# is compose.yaml's env_file, which drive.sh's AGENT_BOX_CLAUDE_ENV (or the
+# default under $HOME) names; no auth volume is mounted.
 services:
   agent:
     stdin_open: false
     tty: false
+    env_file: !override
+      - path: ${AGENT_BOX_CLAUDE_ENV:-${HOME:?}/.config/rsb/agent-box/claude.env}
+        required: false
     volumes: !override
       - type: bind
         source: ${ATTEMPT_DIR:?}/repo
@@ -29,6 +34,4 @@ services:
         source: ${RSB_SKILLS:?}/skills/engineering/rsb-code-review
         target: /skills/rsb-code-review
         read_only: true
-      - claude-auth:/auth:ro
-      - claude-auth-out:/auth-out
       - pnpm-store:/home/node/.local/share/pnpm
