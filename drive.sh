@@ -71,6 +71,13 @@ if ! jq -e '.schema == "brief/v1" and .outbox_path == "/run/outbox"' \
   exit 2
 fi
 
+# The agent runs as uid 0 (compose.driver.yaml). Only rootless Docker makes
+# that the host user; anywhere else it would be the host's root.
+if ! docker info --format '{{.SecurityOptions}}' | grep -q 'name=rootless'; then
+  echo "drive.sh: Docker is not rootless; the agent runs as uid 0, which only rootless Docker maps to you (see README.md)" >&2
+  exit 2
+fi
+
 export COMPOSE_PROJECT_NAME=$project
 export COMPOSE_FILE=compose.yaml:compose.driver.yaml
 BRANCH=$(git -C "$ATTEMPT_DIR/repo" symbolic-ref --short -q HEAD || :)

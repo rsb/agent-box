@@ -4,13 +4,29 @@
 # fail the launch instead of being created (long syntax binds). The sign-in
 # is compose.yaml's env_file, which drive.sh's AGENT_BOX_CLAUDE_ENV (or the
 # default under $HOME) names; no auth volume is mounted.
+#
+# The agent runs as uid 0, which rootless Docker maps to the host user
+# (drive.sh refuses any other Docker): the bind mounts are the host user's,
+# so they are root's in the box, and uid 1000 there is a subordinate uid
+# that cannot write them. It has no capabilities, so it writes only what
+# it owns: the home tmpfs and the pnpm volume are made root's for that
+# (nocopy: a new volume would otherwise copy the image's node-owned mount
+# point). IS_SANDBOX=1 lets Claude Code run as root with its permission
+# prompts off.
 services:
   agent:
+    user: "0:0"
     stdin_open: false
     tty: false
+    tmpfs: !override
+      - /tmp:exec,size=2g
+      - /home/node:uid=0,gid=0,mode=0755
     env_file: !override
       - path: ${AGENT_BOX_CLAUDE_ENV:-${HOME:?}/.config/rsb/agent-box/claude.env}
         required: false
+    environment:
+      HOME: /home/node
+      IS_SANDBOX: "1"
     volumes: !override
       - type: bind
         source: ${ATTEMPT_DIR:?}/repo
@@ -34,4 +50,8 @@ services:
         source: ${RSB_SKILLS:?}/skills/engineering/rsb-code-review
         target: /skills/rsb-code-review
         read_only: true
-      - pnpm-store:/home/node/.local/share/pnpm
+      - type: volume
+        source: pnpm-store
+        target: /home/node/.local/share/pnpm
+        volume:
+          nocopy: true
