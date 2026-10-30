@@ -47,9 +47,11 @@ What the agent can reach, in plain terms:
   environment variable, read from an env file on the host. Codex gets only
   its own `auth.json`. Neither can see the other's. There is no git remote
   and no push credential, so nothing in the box can push.
-- **Container.** User 1000, read-only root filesystem, every Linux
-  capability dropped, `no-new-privileges`, 2048 processes and 8 GB of
-  memory at most. `/tmp` (2 GB) and the home directory are tmpfs.
+- **Container.** User 1000 (uid 0 for `drive.sh` runs, which rootless
+  Docker maps to you; see [below](#unattended-runs-drivesh)), read-only
+  root filesystem, every Linux capability dropped, `no-new-privileges`,
+  2048 processes and 8 GB of memory at most. `/tmp` (2 GB) and the home
+  directory are tmpfs.
 - **Nothing carries over between runs.** The agent's home
   (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`) is on a tmpfs and starts empty each
   run, so nothing a run writes there (a global `CLAUDE.md` or `AGENTS.md`,
@@ -80,7 +82,9 @@ protect against.
 
 - A Linux x86_64 host. The image downloads an x86_64 `sqld` binary.
 - Docker Engine with Compose v2, recent enough for `env_file` entries with
-  `required:` and the `!override` tag.
+  `required:` and the `!override` tag. `drive.sh` needs
+  [rootless Docker](https://docs.docker.com/engine/security/rootless/)
+  and refuses to run under any other.
 - git, and `jq` on the host for `drive.sh`.
 - The `claude` CLI on the host, signed in to a Claude subscription, to mint
   the token.
@@ -218,6 +222,21 @@ paths the agent sees:
 | `<attempt-dir>/run/brief.json` | `/run/brief.json` (read-only) |
 | `<attempt-dir>/run/outbox` | `/run/outbox` (read-write) |
 | `$RSB_SKILLS/skills/engineering/{implement,tdd,rsb-code-review}` | `/skills/<name>` (read-only), linked into `~/.claude/skills` |
+
+The agent runs as uid 0 here, not 1000. Under rootless Docker, uid 0 in
+the container is you on the host, and uid 1000 is one of your
+subordinate uids. The attempt's paths are yours, so to uid 1000 they are
+root's and read-only, and the agent could neither commit nor fill its
+outbox. As uid 0 it writes them as you, and what it writes is yours on
+the host. It still has no capabilities, so it writes only what it owns:
+the bind mounts, the home tmpfs and the `/tmp` tmpfs, and the pnpm
+volume (created empty, so it is root's too). The root filesystem, and
+the managed settings on it, stay read-only. Claude Code refuses to turn
+its permission prompts off as root unless `IS_SANDBOX=1` is set, so the
+agent's environment sets it. Under rootful Docker, uid 0 would be the
+host's root, so `drive.sh` checks `docker info` and refuses. The desk
+(`start.sh`) still runs as uid 1000: its workspace is a Docker volume,
+which Docker makes writable for that uid.
 
 There is no bundle here: the attempt's checkout is mounted directly, and
 whatever launched `drive.sh` reads the result from `repo/` and
